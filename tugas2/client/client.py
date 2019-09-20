@@ -1,4 +1,5 @@
 import Pyro4
+import subprocess
 
 def get_server():
     uri = "PYRONAME:greetserver@localhost:7777"
@@ -21,5 +22,14 @@ if __name__=='__main__':
             print(server.delete_handler(req))
         elif req_split[0] == 'read':
             print(server.read_handler(req))
-        else:
+        elif req_split[0] == 'update':
+            res = server.update_handler(req)
+            if res != server.command_not_found():
+                subprocess.call(res)
+            else:
+                print(res)
+        elif req_split[0] == 'exit':
+            print(server.bye())
             connected = False
+        else:
+            print(server.command_not_found())

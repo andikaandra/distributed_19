@@ -1,3 +1,4 @@
+import subprocess
 import random
 import shlex
 import os
@@ -11,6 +12,9 @@ class GreetServer(object):
 
     def command_success(self):
         return "operation success"
+
+    def bye(self) -> str:
+        return "bye!"
 
     def delete_file(self, path, name) -> str:
         res = self.command_success()
@@ -38,7 +42,7 @@ class GreetServer(object):
         root = os.path.dirname(os.path.abspath(__file__))
         return root + "/storage"
 
-    def get_list_dir(self, req) -> list:
+    def get_list_dir(self, req) -> str:
         args = req.split()
         dirs = os.listdir(self._get_storage_path())
         res = ""
@@ -46,8 +50,9 @@ class GreetServer(object):
             for dir in dirs:
                 res = res + "{}   ".format(dir)
         elif len(args) == 2 and args[1] in ["-a", "-all"]:
+            res = res + "."
             for dir in dirs:
-                res = res + "{}\n".format(dir)
+                res = res + "\n{}".format(dir)
         else:
             res = self.command_not_found()
         return res
@@ -84,6 +89,16 @@ class GreetServer(object):
         res = ""
         if len(args) > 1:
             res = self.process_file(dirs, args[1], "r")
+        else:
+            res = self.command_not_found()
+        return res
+
+    def update_handler(self, req):
+        args = shlex.split(req)        
+        dirs = self._get_storage_path()
+        res = ""
+        if len(args) > 1:
+            res = ['nano', os.path.join(dirs, args[1])]
         else:
             res = self.command_not_found()
         return res
