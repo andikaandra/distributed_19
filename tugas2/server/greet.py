@@ -19,8 +19,7 @@ class GreetServer(object):
     def delete_file(self, path, name) -> str:
         res = self.command_success()
         try:
-            full_path = os.path.join(path, name)
-            os.remove(full_path)
+            os.remove(os.path.join(path, name))
         except Exception as e:
             return str(e)
         return res
@@ -28,11 +27,11 @@ class GreetServer(object):
     def process_file(self, path, name, operation, *args, **kwargs) -> str:
         res = self.command_success()
         try:
-            content = kwargs.get('content', None)
-            full_path = os.path.join(path, name)
-            f = open(full_path, operation)
+            f = open(os.path.join(path, name), operation)
             if operation == "r":
                 res = f.read()
+            elif operation == "a+":
+                f.write(kwargs.get('content', None))
             f.close()
         except Exception as e:
             return str(e)
@@ -97,8 +96,14 @@ class GreetServer(object):
         args = shlex.split(req)        
         dirs = self._get_storage_path()
         res = ""
-        if len(args) > 1:
-            res = ['nano', os.path.join(dirs, args[1])]
+        if len(args) == 4:
+            if args[1] in ["--append", "-a"]:
+                res = self.process_file(dirs, args[2], "a+", content=args[3])
+            elif args[1] in ["--overwrite", "-o"]:
+                res = self.process_file(dirs, args[2], "w")
+                res = self.process_file(dirs, args[2], "a+", content=args[3])
+            else:
+                res = self.command_not_found()
         else:
             res = self.command_not_found()
         return res

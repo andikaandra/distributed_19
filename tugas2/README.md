@@ -7,7 +7,7 @@
 
 ### Available Commands
 - `list` : get all files in server storage directory  \
-  option : `-a` / `-all`cd client && python client.py  \
+  option : `-a` / `-all`\
   example : `list -a`
 - `create` : make new file/files  
   syntax : `create file1 file2 file3`  \
@@ -19,8 +19,9 @@
   syntax : `read file`  \
   example : `read text.txt`
 - `update` : update file or create new file if not exists  
-  syntax : `update file`  \
-  example : `update text.txt`
+  option : `--append` / `-a`, `--overwrite` / `-o`\
+  syntax : `update option file content`  \
+  example : `update --append text.txt "lorem ipsumsit dolor amet"`
 - `exit` : exit  
   syntax : `exit`  \
   example : `exit`
