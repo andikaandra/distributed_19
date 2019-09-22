@@ -24,7 +24,7 @@ class GreetServer(object):
             return str(e)
         return res
 
-    def process_file(self, path, name, operation, *args, **kwargs) -> str:
+    def _process_file(self, path, name, operation, *args, **kwargs) -> str:
         res = self.command_success()
         try:
             f = open(os.path.join(path, name), operation)
@@ -36,10 +36,15 @@ class GreetServer(object):
         except Exception as e:
             return str(e)
         return res
-            
+    
+    def _root_folder_exists(self, root):
+        if not os.path.exists(root):
+            os.makedirs(root)
+
     def _get_storage_path(self) -> str:
-        root = os.path.dirname(os.path.abspath(__file__))
-        return root + "/storage"
+        root = os.path.dirname(os.path.abspath(__file__)) + "/storage"
+        self._root_folder_exists(root)
+        return root
 
     def get_list_dir(self, req) -> str:
         args = req.split()
@@ -62,7 +67,7 @@ class GreetServer(object):
         res = ""
         if len(args) > 1:
             for file_name in args[1:]:
-                res = self.process_file(dirs, file_name, "w+")
+                res = self._process_file(dirs, file_name, "w+")
                 if res != self.command_success():
                     return res
         else:
@@ -87,7 +92,7 @@ class GreetServer(object):
         dirs = self._get_storage_path()
         res = ""
         if len(args) > 1:
-            res = self.process_file(dirs, args[1], "r")
+            res = self._process_file(dirs, args[1], "r")
         else:
             res = self.command_not_found()
         return res
@@ -98,10 +103,10 @@ class GreetServer(object):
         res = ""
         if len(args) == 4:
             if args[1] in ["--append", "-a"]:
-                res = self.process_file(dirs, args[2], "a+", content=args[3])
+                res = self._process_file(dirs, args[2], "a+", content=args[3])
             elif args[1] in ["--overwrite", "-o"]:
-                res = self.process_file(dirs, args[2], "w")
-                res = self.process_file(dirs, args[2], "a+", content=args[3])
+                res = self._process_file(dirs, args[2], "w")
+                res = self._process_file(dirs, args[2], "a+", content=args[3])
             else:
                 res = self.command_not_found()
         else:

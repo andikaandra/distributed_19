@@ -2,6 +2,7 @@ import Pyro4
 import subprocess
 
 def get_server():
+    #ganti "localhost dengan ip yang akan anda gunakan sebagai server" 
     uri = "PYRONAME:greetserver@localhost:7777"
     gserver = Pyro4.Proxy(uri)
     return gserver
