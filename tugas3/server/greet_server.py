@@ -1,4 +1,4 @@
-from greet import  *
+from greet import GreetServer
 import Pyro4
 
 def start_with_ns():

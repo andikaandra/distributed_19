@@ -1,5 +1,3 @@
-import subprocess
-import random
 import shlex
 import os
 
@@ -15,6 +13,15 @@ class GreetServer(object):
 
     def bye(self) -> str:
         return "bye!"
+
+    def ok(self) -> str:
+        return "ok"
+
+    def fail(self) -> str:
+        return "fail"
+
+    def ping_interval(self) -> int:
+        return 3
 
     def delete_file(self, path, name) -> str:
         res = self.command_success()

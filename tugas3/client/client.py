@@ -1,5 +1,22 @@
 import Pyro4
+import Pyro4.errors
+import time
 import subprocess
+import threading
+
+interval = 0
+server = None
+connected = True
+
+def ping_server(connected):
+    while True:
+        try:
+            server._pyroBind()
+        except (Pyro4.errors.CommunicationError, Pyro4.errors.ConnectionClosedError):
+            print("=== Server disconnected ===")
+            connected = False
+            break
+        time.sleep(interval)
 
 def get_server():
     #ganti "localhost dengan ip yang akan anda gunakan sebagai server" 
@@ -7,11 +24,18 @@ def get_server():
     gserver = Pyro4.Proxy(uri)
     return gserver
 
+def job_ping_server():
+    global connected
+    t = threading.Thread(target=ping_server, args =(lambda : connected, ))
+    t.start()
+    return t
+
 if __name__=='__main__':
     server = get_server()
     if server == None:
         exit()
-    connected = True
+    interval = server.ping_interval()
+    thread = job_ping_server()
     while connected:
         req = input ("> ").lower()
         req_split = req.split()
@@ -30,3 +54,7 @@ if __name__=='__main__':
             connected = False
         else:
             print(server.command_not_found())
+
+    thread.is_running = False
+    thread.join()
+    exit()
