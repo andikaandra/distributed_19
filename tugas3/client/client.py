@@ -12,9 +12,12 @@ def ping_server(connected):
     while True:
         try:
             server._pyroBind()
-        except (Pyro4.errors.CommunicationError, Pyro4.errors.ConnectionClosedError):
-            print("=== Server disconnected ===")
-            connected = False
+        except:
+            try:
+                 server._pyroBind()
+            except:
+                print("=== Server disconnected | check by ping every {} seconds ===".format(interval))
+                connected = False
             break
         time.sleep(interval)
 
@@ -35,25 +38,29 @@ if __name__=='__main__':
     if server == None:
         exit()
     interval = server.ping_interval()
+    server._pyroTimeout = interval
     thread = job_ping_server()
     while connected:
         req = input ("> ").lower()
         req_split = req.split()
-        if req_split[0] == 'list':
-            print(server.get_list_dir(req))
-        elif req_split[0] == 'create':
-            print(server.create_handler(req))
-        elif req_split[0] == 'delete':
-            print(server.delete_handler(req))
-        elif req_split[0] == 'read':
-            print(server.read_handler(req))
-        elif req_split[0] == 'update':
-            print(server.update_handler(req))
-        elif req_split[0] == 'exit':
-            print(server.bye())
-            connected = False
-        else:
-            print(server.command_not_found())
+        try:
+            if req_split[0] == 'list':
+                print(server.get_list_dir(req))
+            elif req_split[0] == 'create':
+                print(server.create_handler(req))
+            elif req_split[0] == 'delete':
+                print(server.delete_handler(req))
+            elif req_split[0] == 'read':
+                print(server.read_handler(req))
+            elif req_split[0] == 'update':
+                print(server.update_handler(req))
+            elif req_split[0] == 'exit':
+                print(server.bye())
+                connected = False
+            else:
+                print(server.command_not_found())
+        except Pyro4.errors.ConnectionClosedError:
+            break
 
     thread.is_running = False
     thread.join()
