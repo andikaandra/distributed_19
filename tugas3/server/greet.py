@@ -1,5 +1,6 @@
 import shlex
 import os
+import time
 
 class GreetServer(object):
     def __init__(self):
@@ -22,6 +23,9 @@ class GreetServer(object):
 
     def ping_interval(self) -> int:
         return 3
+
+    def max_retries(self) -> int:
+        return 2
 
     def delete_file(self, path, name) -> str:
         res = self.command_success()
@@ -54,6 +58,7 @@ class GreetServer(object):
         return root
 
     def get_list_dir(self, req) -> str:
+        time.sleep(4)
         args = req.split()
         dirs = os.listdir(self._get_storage_path())
         res = ""

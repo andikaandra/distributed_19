@@ -3,23 +3,11 @@ import Pyro4.errors
 import time
 import subprocess
 import threading
+import os
+import sys
 
-interval = 0
 server = None
 connected = True
-
-def ping_server(connected):
-    while True:
-        try:
-            server._pyroBind()
-        except:
-            try:
-                 server._pyroBind()
-            except:
-                print("=== Server disconnected | check by ping every {} seconds ===".format(interval))
-                connected = False
-            break
-        time.sleep(interval)
 
 def get_server():
     #ganti "localhost dengan ip yang akan anda gunakan sebagai server" 
@@ -27,41 +15,49 @@ def get_server():
     gserver = Pyro4.Proxy(uri)
     return gserver
 
-def job_ping_server():
-    global connected
-    t = threading.Thread(target=ping_server, args =(lambda : connected, ))
-    t.start()
-    return t
+def gracefully_exits():
+    try:
+        sys.exit(0)
+    except SystemExit:
+        os._exit(0)
 
 if __name__=='__main__':
     server = get_server()
     if server == None:
         exit()
-    interval = server.ping_interval()
-    server._pyroTimeout = interval
-    thread = job_ping_server()
+    server._pyroTimeout = server.ping_interval()
+    server._pyroAsync()
     while connected:
-        req = input ("> ").lower()
-        req_split = req.split()
         try:
+            req = input ("> ").lower()
+            req_split = req.split()
+
             if req_split[0] == 'list':
-                print(server.get_list_dir(req))
+                res = server.get_list_dir(req)
             elif req_split[0] == 'create':
-                print(server.create_handler(req))
+                res = server.create_handler(req)
             elif req_split[0] == 'delete':
-                print(server.delete_handler(req))
+                res = server.delete_handler(req)
             elif req_split[0] == 'read':
-                print(server.read_handler(req))
+                res = server.read_handler(req)
             elif req_split[0] == 'update':
-                print(server.update_handler(req))
+                res = server.update_handler(req)
             elif req_split[0] == 'exit':
                 print(server.bye())
                 connected = False
             else:
-                print(server.command_not_found())
-        except Pyro4.errors.ConnectionClosedError:
-            break
+                res = server.command_not_found()
 
-    thread.is_running = False
-    thread.join()
-    exit()
+            # ready = res.ready
+            # res.wait(timeout=3)
+            # while not ready:
+            #     ready = res.ready
+            #     print("loading..")
+            print(res.value)
+        except (Pyro4.errors.ConnectionClosedError, Pyro4.errors.CommunicationError) as e:
+            print(str(e))
+            break
+        except KeyboardInterrupt:
+            print('Interrupted..')
+            break
+    gracefully_exits()
