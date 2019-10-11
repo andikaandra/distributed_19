@@ -58,7 +58,6 @@ class GreetServer(object):
         return root
 
     def get_list_dir(self, req) -> str:
-        time.sleep(4)
         args = req.split()
         dirs = os.listdir(self._get_storage_path())
         res = ""
@@ -124,3 +123,7 @@ class GreetServer(object):
         else:
             res = self.command_not_found()
         return res
+
+    def down_my_server(self) -> str:
+        time.sleep(self.ping_interval() + 1)
+        return self.ok()
