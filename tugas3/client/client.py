@@ -5,6 +5,7 @@ import threading
 import os
 import sys
 import uuid
+from heartbeat import Heartbeat
 
 id = None
 interval = 0
@@ -19,13 +20,30 @@ def get_server():
     except:
         gracefully_exits()
 
-def expose_function(Server, id):
+def job_heartbeat() -> threading.Thread:
+    global id
+    heartbeat = Heartbeat(id)
+    t1 = threading.Thread(target=job_heartbeat_failure, args=(heartbeat,))
+    t1.start()
+
+    t = threading.Thread(target=expose_function, args=(heartbeat, id,))
+    t.start()
+    return t, t1
+
+def job_heartbeat_failure(heartbeat):
+    while True:
+        if time.time() - heartbeat.last_received > 2*interval:
+            print("\nserver is down [DETECT BY heartbeat]")
+            break
+        time.sleep(interval)
+    gracefully_exits()
+
+def expose_function(heartbeat, id):
     __host = "localhost"
-    __port = 3001
+    __port = 7777
     daemon = Pyro4.Daemon(host = __host)
     ns = Pyro4.locateNS(__host, __port)
-    x_Server = Pyro4.expose(Server)
-    uri_server = daemon.register(x_Server)
+    uri_server = daemon.register(heartbeat)
     ns.register("heartbeat-{}".format(id), uri_server)
     daemon.requestLoop()
 
@@ -45,7 +63,7 @@ def ping_server():
         if not alive:
             alive = communicate()
             if not alive:
-                print("\nserver is down")
+                print("\nserver is down [DETECT BY ping ack]")
                 break
         time.sleep(interval)
     gracefully_exits()
@@ -56,9 +74,10 @@ def job_ping_server_ping_ack() -> threading.Thread:
     return t
 
 def gracefully_exits():
+    # unregister device on server 
     server.connected_device_delete(id)
-    time.sleep(0.5)
     print("disconnecting..")
+    time.sleep(0.5)
     try:
         sys.exit(0)
     except SystemExit:
@@ -114,11 +133,16 @@ if __name__=='__main__':
     # register device on server 
     server.connected_device_add(id)
 
-    # create heartbeat obj 
-    # expose_function(None, id)
-
+    thread_heartbeat, thread_heartbeat_detector = job_heartbeat()
     thread_ping_ack = job_ping_server_ping_ack()
+
+    # register failure detector on server
+    server.new_thread_job(id)
+
     listen_command()
+
     connected = False
     thread_ping_ack.join()
+    # thread_heartbeat.join()
+    # thread_heartbeat_detector.join()
     gracefully_exits()

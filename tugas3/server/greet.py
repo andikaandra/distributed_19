@@ -2,11 +2,14 @@ import shlex
 import os
 import time
 import Pyro4
+import Pyro4.errors
 import json
+import threading
 
 class Server(object):
     def __init__(self):
         self.connected_device = []
+        self.connected_device_thread_job = []
 
     @Pyro4.expose
     def connected_device_list(self) -> str:
@@ -51,6 +54,33 @@ class Server(object):
     @Pyro4.expose
     def max_retries(self) -> int:
         return 2
+
+    @Pyro4.expose
+    def new_thread_job(self, id) -> str:
+        t = threading.Thread(target=self.__new_thread_job, args=(id,))
+        t.start()
+        self.connected_device_thread_job.append(t)
+        return self.ok()
+
+    def __connect_heartbeat_server(self, id):
+        time.sleep(self.ping_interval())
+        try:
+            uri = "PYRONAME:heartbeat-{}@localhost:7777".format(id)
+            server = Pyro4.Proxy(uri)
+        except:
+            return None
+        return server
+
+    def __new_thread_job(self, id):
+        server = self.__connect_heartbeat_server(id)
+        while True:
+            try:
+                res = server.signal_heartbeat()
+                print(res)
+            except (Pyro4.errors.ConnectionClosedError, Pyro4.errors.CommunicationError) as e:
+                print(str(e))
+                break
+            time.sleep(self.ping_interval())
 
     def __delete_file(self, path, name) -> str:
         res = self.command_success()
