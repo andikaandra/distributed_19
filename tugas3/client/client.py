@@ -12,9 +12,9 @@ interval = 0
 server = None
 connected = True
 
-def get_server():
+def get_server(id):
     try:
-        uri = "PYRONAME:server@localhost:7777"
+        uri = "PYRONAME:{}@localhost:7777".format(id)
         gserver = Pyro4.Proxy(uri)
         return gserver
     except:
@@ -37,6 +37,23 @@ def job_heartbeat_failure(heartbeat):
             break
         time.sleep(interval)
     gracefully_exits()
+
+def job_heartbeat_failure_all_to_all(id):
+    server_heartbeat = get_server('heartbeat-{}'.format(id))
+    while True:
+        try:
+            summary = server_heartbeat.get_summary_heartbeat(id)
+            summary = summary.split(',')
+            if summary[1] == 'none':
+                pass
+            else:
+                if time.time() - float(summary[2]) > 2*interval:
+                    print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
+                    break        
+            time.sleep(interval)
+        except:
+            print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
+            break
 
 def expose_function_heartbeat(heartbeat, id):
     __host = "localhost"
@@ -92,6 +109,9 @@ def all_to_al_heartbeat_job(heartbeat, devices):
     for device in devices:
         heartbeat.new_thread_job(device)
 
+        t1 = threading.Thread(target=job_heartbeat_failure_all_to_all, args=(device,))
+        t1.start()
+
 def listen_command():
     alive = True
     while alive:
@@ -134,7 +154,7 @@ if __name__=='__main__':
     print('---------- registered id : {}'.format(id))
 
     # core
-    server = get_server()
+    server = get_server('server')
     interval = server.ping_interval()
     server._pyroTimeout = interval
     server._pyroAsync()
