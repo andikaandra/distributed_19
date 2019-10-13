@@ -11,6 +11,7 @@ id = None
 interval = 0
 server = None
 connected = True
+connected_device = []
 
 def get_server(id):
     try:
@@ -49,7 +50,7 @@ def job_heartbeat_failure_all_to_all(id):
             else:
                 if time.time() - float(summary[2]) > 2*interval:
                     print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
-                    break        
+                    # break
             time.sleep(interval)
         except:
             print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
@@ -85,8 +86,26 @@ def ping_server():
         time.sleep(interval)
     gracefully_exits()
 
+def get_connected_device_from_server() -> list:
+    conn_device = server.connected_device_ls()
+    conn_device.ready
+    conn_device.wait(1)
+    conn_device = clear_connected_device(conn_device.value.split(','), id)
+    return conn_device
+
 def job_ping_server_ping_ack() -> threading.Thread:
     t = threading.Thread(target=ping_server)
+    t.start()
+    return t
+
+def register_new_clients(heartbeat):
+    while True:
+        conn_device = get_connected_device_from_server()
+        all_to_al_heartbeat_job(heartbeat, conn_device)
+        time.sleep(interval)
+
+def job_check_updated_device_from_server(heartbeat) -> threading.Thread:
+    t = threading.Thread(target=register_new_clients, args=(heartbeat,))
     t.start()
     return t
 
@@ -107,10 +126,12 @@ def clear_connected_device(devices, id) -> list:
 
 def all_to_al_heartbeat_job(heartbeat, devices):
     for device in devices:
-        heartbeat.new_thread_job(device)
+        if device not in connected_device:
+            connected_device.append(device)
+            heartbeat.new_thread_job(device)
 
-        t1 = threading.Thread(target=job_heartbeat_failure_all_to_all, args=(device,))
-        t1.start()
+            t1 = threading.Thread(target=job_heartbeat_failure_all_to_all, args=(device,))
+            t1.start()
 
 def listen_command():
     alive = True
@@ -168,16 +189,16 @@ if __name__=='__main__':
     # register failure detector on server
     server.new_thread_job(id)
 
-    conn_device = server.connected_device_ls()
-    conn_device.ready
-    conn_device.wait(1)
-    conn_device = clear_connected_device(conn_device.value.split(','), id)
+    conn_device = get_connected_device_from_server()
 
     all_to_al_heartbeat_job(heartbeat, conn_device)
+
+    thread_get_connected_device_list = job_check_updated_device_from_server(heartbeat)
 
     listen_command()
 
     connected = False
+    # thread_get_connected_device_list.join()
     thread_ping_ack.join()
     # thread_heartbeat.join()
     # thread_heartbeat_detector.join()
