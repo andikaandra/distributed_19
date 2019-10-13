@@ -16,16 +16,18 @@ class Server(object):
         return 'connected device : '+', '.join(self.connected_device)
 
     @Pyro4.expose
-    def connected_device_add(self, id) -> str:
-        print('register '+ id)
-        self.connected_device.append(id)
-        self.ok()
+    def connected_device_ls(self) -> str:
+        return ','.join(self.connected_device)
 
     @Pyro4.expose
-    def connected_device_delete(self, id) -> str:
+    def connected_device_add(self, id):
+        print('register '+ id)
+        self.connected_device.append(id)
+
+    @Pyro4.expose
+    def connected_device_delete(self, id):
         print('unregister '+ id)
         self.connected_device.remove(id)
-        self.ok()
 
     @Pyro4.expose
     def command_not_found(self) -> str:

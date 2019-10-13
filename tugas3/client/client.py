@@ -26,9 +26,9 @@ def job_heartbeat() -> threading.Thread:
     t1 = threading.Thread(target=job_heartbeat_failure, args=(heartbeat,))
     t1.start()
 
-    t = threading.Thread(target=expose_function, args=(heartbeat, id,))
+    t = threading.Thread(target=expose_function_heartbeat, args=(heartbeat, id,))
     t.start()
-    return t, t1
+    return heartbeat, t, t1
 
 def job_heartbeat_failure(heartbeat):
     while True:
@@ -38,7 +38,7 @@ def job_heartbeat_failure(heartbeat):
         time.sleep(interval)
     gracefully_exits()
 
-def expose_function(heartbeat, id):
+def expose_function_heartbeat(heartbeat, id):
     __host = "localhost"
     __port = 7777
     daemon = Pyro4.Daemon(host = __host)
@@ -82,6 +82,15 @@ def gracefully_exits():
         sys.exit(0)
     except SystemExit:
         os._exit(0)
+
+def clear_connected_device(devices, id) -> list:
+    if id in devices:
+        devices.remove(id)
+    return devices
+
+def all_to_al_heartbeat_job(heartbeat, devices):
+    for device in devices:
+        heartbeat.new_thread_job(device)
 
 def listen_command():
     alive = True
@@ -130,14 +139,21 @@ if __name__=='__main__':
     server._pyroTimeout = interval
     server._pyroAsync()
 
-    # register device on server 
+    # register device on server (heartbeat)
     server.connected_device_add(id)
 
-    thread_heartbeat, thread_heartbeat_detector = job_heartbeat()
+    heartbeat, thread_heartbeat, thread_heartbeat_detector = job_heartbeat()
     thread_ping_ack = job_ping_server_ping_ack()
 
     # register failure detector on server
     server.new_thread_job(id)
+
+    conn_device = server.connected_device_ls()
+    conn_device.ready
+    conn_device.wait(1)
+    conn_device = clear_connected_device(conn_device.value.split(','), id)
+
+    all_to_al_heartbeat_job(heartbeat, conn_device)
 
     listen_command()
 
