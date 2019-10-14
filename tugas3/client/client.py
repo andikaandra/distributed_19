@@ -53,7 +53,7 @@ def job_heartbeat_failure_all_to_all(id):
                     # break
             time.sleep(interval)
         except:
-            print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
+            # print("\n{} is down [DETECT BY all heartbeat]\n> ".format(id))
             break
 
 def expose_function_heartbeat(heartbeat, id):
@@ -87,10 +87,13 @@ def ping_server():
     gracefully_exits()
 
 def get_connected_device_from_server() -> list:
-    conn_device = server.connected_device_ls()
-    conn_device.ready
-    conn_device.wait(1)
-    conn_device = clear_connected_device(conn_device.value.split(','), id)
+    try:
+        conn_device = server.connected_device_ls()
+        conn_device.ready
+        conn_device.wait(1)
+        conn_device = clear_connected_device(conn_device.value.split(','), id)
+    except:
+        return None
     return conn_device
 
 def job_ping_server_ping_ack() -> threading.Thread:
@@ -170,15 +173,19 @@ def listen_command():
     return
 
 if __name__=='__main__':
+    # core
+    server = get_server('server')
+    try:
+        interval = server.ping_interval()
+    except:
+        print('server not running')
+        sys.exit(0)
+    server._pyroTimeout = interval
+    server._pyroAsync()
+
     # device id 
     id = str(uuid.uuid4())
     print('---------- registered id : {}'.format(id))
-
-    # core
-    server = get_server('server')
-    interval = server.ping_interval()
-    server._pyroTimeout = interval
-    server._pyroAsync()
 
     # register device on server (heartbeat)
     server.connected_device_add(id)
