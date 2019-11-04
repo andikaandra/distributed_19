@@ -191,3 +191,6 @@ class Server(object):
     def down_my_server(self) -> str:
         time.sleep(self.ping_interval() + 1)
         return self.ok()
+
+    def __propagate_to_all_server(self, command):
+        pass
