@@ -38,15 +38,16 @@ class Heartbeat(object):
 
     def __new_thread_job(self, id):
         server = self.__connect_heartbeat_server(id)
-        server.add_heartbeat_summary(id)
-        while True:
-            try:
-                res = server.signal_heartbeat_all_to_all(id)
-                # print(res)
-            except (Pyro4.errors.ConnectionClosedError, Pyro4.errors.CommunicationError) as e:
-                print(str(e))
-                break
-            time.sleep(self.ping_interval())
+        if server:
+            server.add_heartbeat_summary(id)
+            while True:
+                try:
+                    res = server.signal_heartbeat_all_to_all(id)
+                    # print(res)
+                except (Pyro4.errors.ConnectionClosedError, Pyro4.errors.CommunicationError) as e:
+                    print(str(e))
+                    break
+                time.sleep(self.ping_interval())
 
     @Pyro4.expose
     def add_heartbeat_summary(self, id):

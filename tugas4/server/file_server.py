@@ -7,7 +7,8 @@ import json
 import threading
 
 class Server(object):
-    def __init__(self):
+    def __init__(self, name_server):
+        self.name_server = name_server
         self.connected_device = []
         self.connected_device_thread_job = []
 
@@ -110,7 +111,7 @@ class Server(object):
             os.makedirs(root)
 
     def __get_storage_path(self) -> str:
-        root = os.path.dirname(os.path.abspath(__file__)) + "/storage"
+        root = os.path.dirname(os.path.abspath(__file__)) + "/storage/" + self.name_server
         self.__root_folder_exists(root)
         return root
 

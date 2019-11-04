@@ -10,7 +10,7 @@ def start_with_ns(nameinstance = "server"):
     # pyro4-nsc -n localhost -p 7777 list
     __host = "localhost"
     __port = 7777
-    server = Server()
+    server = Server(nameinstance)
     daemon = Pyro4.Daemon(host = __host)
     ns = Pyro4.locateNS(__host, __port)
     uri_server = daemon.register(server)

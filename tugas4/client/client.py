@@ -128,13 +128,14 @@ def clear_connected_device(devices, id) -> list:
     return devices
 
 def all_to_al_heartbeat_job(heartbeat, devices):
-    for device in devices:
-        if device not in connected_device:
-            connected_device.append(device)
-            heartbeat.new_thread_job(device)
+    if devices:
+        for device in devices:
+            if device not in connected_device:
+                connected_device.append(device)
+                heartbeat.new_thread_job(device)
 
-            t1 = threading.Thread(target=job_heartbeat_failure_all_to_all, args=(device,))
-            t1.start()
+                t1 = threading.Thread(target=job_heartbeat_failure_all_to_all, args=(device,))
+                t1.start()
 
 def listen_command():
     alive = True
