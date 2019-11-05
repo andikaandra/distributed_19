@@ -34,11 +34,6 @@ class GlobalServer(object):
         self.queue_manager.put(dc)
         data.clear()
 
-    def sync_between_servers(self):
-        for idx, val in enumerate(self.connected_server):
-            print(idx, val)
-            
-
     def thread_read_queue(self):
         t = threading.Thread(target=self.queue_start)
         t.start()
