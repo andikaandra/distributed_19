@@ -22,19 +22,17 @@ def start_with_ns(nameinstance = "server"):
     __port = 7777
     if not globalserver.check_connected_server(nameinstance):
         globalserver.add_connected_server(nameinstance)
-        with Pyro4.Daemon(host = __host) as daemon:
-            print("connected server : {}".format(globalserver.get_all_connected_server()))
-            server = Server(nameinstance)
-            ns = Pyro4.locateNS(__host, __port)
-            uri_server = daemon.register(server)
-            print("URI server : ", uri_server)
-            ns.register(nameinstance, uri_server)
-            daemon.requestLoop()
-        print('\nexited..')
-        print('unregister {} from global server'.format(nameinstance))
-        globalserver.remove_connected_server(nameinstance)
-    else:
-        print("server {} already running".format(nameinstance))
+    with Pyro4.Daemon(host = __host) as daemon:
+        print("connected server : {}".format(globalserver.get_all_connected_server()))
+        server = Server(nameinstance)
+        ns = Pyro4.locateNS(__host, __port)
+        uri_server = daemon.register(server)
+        print("URI server : ", uri_server)
+        ns.register(nameinstance, uri_server)
+        daemon.requestLoop()
+    print('\nexited..')
+    # print('unregister {} from global server'.format(nameinstance))
+    # globalserver.remove_connected_server(nameinstance)
 
 
 if __name__ == '__main__':

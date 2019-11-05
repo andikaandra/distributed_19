@@ -34,6 +34,11 @@ class GlobalServer(object):
         self.queue_manager.put(dc)
         data.clear()
 
+    def sync_between_servers(self):
+        for idx, val in enumerate(self.connected_server):
+            print(idx, val)
+            
+
     def thread_read_queue(self):
         t = threading.Thread(target=self.queue_start)
         t.start()
@@ -54,6 +59,7 @@ class GlobalServer(object):
                     server_instance.update_handler(req)
                 elif command == 'delete':
                     server_instance.delete_handler(req)
+                print('run : {} | {} on {}'.format(command, req, server))
     
     # test 
     @Pyro4.expose
