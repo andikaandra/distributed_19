@@ -22,6 +22,7 @@ def start_with_ns(nameinstance = "server"):
     __port = 7777
     if not globalserver.check_connected_server(nameinstance):
         globalserver.add_connected_server(nameinstance)
+    globalserver.sync_between_servers()
     with Pyro4.Daemon(host = __host) as daemon:
         print("connected server : {}".format(globalserver.get_all_connected_server()))
         server = Server(nameinstance)
