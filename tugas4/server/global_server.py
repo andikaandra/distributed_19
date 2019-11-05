@@ -4,6 +4,7 @@ import Pyro4
 import time
 import queue
 import threading
+from file_server import Server
 
 class GlobalServer(object):
     def __init__(self):
@@ -27,8 +28,8 @@ class GlobalServer(object):
         return server_name in self.connected_server
 
     @Pyro4.expose
-    def push_to_queue(self, command, req):
-        data = {'command': command, 'req': req}
+    def push_to_queue(self, command, req, nameserver):
+        data = {'command': command, 'req': req, 'server' : nameserver}
         dc = data.copy()
         self.queue_manager.put(dc)
         data.clear()
@@ -41,7 +42,18 @@ class GlobalServer(object):
         while True:
             item = self.queue_manager.get()
             # todo : tell all server to replicate
-            print(item)
+            command = item['command']
+            req = item['req']
+            for server in self.connected_server:
+                if server == item['server']:
+                    continue
+                server_instance = Server(server, False)
+                if command == 'create':
+                    server_instance.create_handler(req)
+                elif command == 'update':
+                    server_instance.update_handler(req)
+                elif command == 'delete':
+                    server_instance.delete_handler(req)
     
     # test 
     @Pyro4.expose
