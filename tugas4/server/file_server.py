@@ -8,6 +8,7 @@ import threading
 
 class Server(object):
     def __init__(self, name_server):
+        self.global_server_connection = self.connect_global_server()
         self.name_server = name_server
         self.connected_device = []
         self.connected_device_thread_job = []
@@ -133,6 +134,7 @@ class Server(object):
     
     @Pyro4.expose
     def create_handler(self, req) -> str:
+        self.__propagate_to_all_server('create', req)
         args = shlex.split(req)        
         dirs = self.__get_storage_path()
         res = ""
@@ -147,6 +149,7 @@ class Server(object):
 
     @Pyro4.expose
     def delete_handler(self, req) -> str:
+        self.__propagate_to_all_server('delete', req)
         args = shlex.split(req)        
         dirs = self.__get_storage_path()
         res = ""
@@ -172,6 +175,7 @@ class Server(object):
 
     @Pyro4.expose
     def update_handler(self, req):
+        self.__propagate_to_all_server('update', req)
         args = shlex.split(req)        
         dirs = self.__get_storage_path()
         res = ""
@@ -192,5 +196,14 @@ class Server(object):
         time.sleep(self.ping_interval() + 1)
         return self.ok()
 
-    def __propagate_to_all_server(self, command):
-        pass
+    def connect_global_server(self, name = "globalserver"):
+        try:
+            uri = "PYRONAME:{}@localhost:7777".format(name)
+            gserver = Pyro4.Proxy(uri)
+            return gserver
+        except:
+            return None
+
+    def __propagate_to_all_server(self, command, req):
+        self.global_server_connection.push_to_queue(command, req)
+        print(self.global_server_connection.get_all_queue())
